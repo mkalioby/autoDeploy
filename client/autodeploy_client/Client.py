@@ -1,6 +1,6 @@
-import Config
-import ClientJob as Job
-import Connect
+from . import Config
+from . import ClientJob as Job
+from . import Connect
 import simplejson
 import xml.dom.minidom
 from operator import itemgetter
@@ -82,6 +82,14 @@ class Client:
         result = self._send(msg)
         return result
 
+    def Integrate(self,jobID, workdir, configFile, owner=''):
+        global msg
+        if owner == '':
+            owner = Config.Owner
+        msg = Job.createIntegrateMessage(jobID=jobID,workdir=workdir, configFile=str(configFile), scm=self.scm, owner=owner)
+        result = self._send(msg)
+        return result
+
     def CheckUp(self):
         return Connect.connect(self.server, self.port, 5)
 
@@ -93,20 +101,14 @@ class Client:
         result = []
         #HEAD = True
         for line in res.split("\n"):
+            if "ERR:" in line: return line
             if line=="": continue
             info = line.split(",,")
-            # print line
-         #   if HEAD:
-          #      info[0] = "HEAD"
-           #     HEAD = False
             try:
-
                 d = {"Hash": info[0], "Short": info[1], "Author": info[2], "Committed": info[3], "Message": info[4]}
                 result.append(d)
-
             except:
-                print "Error while parsing line (%s)"%line
-        #print result
+                print("Error while parsing line (%s)"%line)
         return result
 
     def SwitchCommit(self, workdir, commit, owner=''):
